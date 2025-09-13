@@ -1,9 +1,9 @@
 {
-  "name": "Magnolia Wealth — Check‑In",
-  "short_name": "Check‑In",
+  "name": "Magnolia Wealth \u2014 Check-In",
+  "short_name": "Check-In",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#0b0c0d",
   "theme_color": "#2ea44f",
   "icons": [
     {

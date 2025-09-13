@@ -1,9 +1,11 @@
 
-const CACHE_NAME = 'checkin-cache-v1';
+const CACHE_NAME = 'checkin-cache-v2';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './styles.css',
+  './app.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon-180.png'
@@ -11,30 +13,30 @@ const ASSETS = [
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((key) => (key !== CACHE_NAME ? caches.delete(key) : null)))
-    ).then(() => self.clients.claim())
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => k !== CACHE_NAME ? caches.delete(k) : null))
+    ).then(()=> self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  // For navigation requests, serve index.html (SPA-style), then network fallback
   if (req.mode === 'navigate') {
     event.respondWith(
-      caches.match('index.html').then((cached) => cached || fetch(req))
+      caches.match('index.html').then(cached => cached || fetch(req))
     );
     return;
   }
-  // Try cache first, then network
   event.respondWith(
-    caches.match(req).then((cached) => cached || fetch(req))
+    caches.match(req).then(cached => cached || fetch(req).then(res => {
+      const copy = res.clone();
+      caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
+      return res;
+    }).catch(()=> cached))
   );
 });
