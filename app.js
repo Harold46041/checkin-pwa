@@ -195,6 +195,11 @@ function setupSignature(){
 }
 
 function setup(){
+
+// Safety: make sure modals are hidden at startup in case prior CSS shows them
+document.getElementById('sig-modal').classList.add('hidden');
+document.getElementById('client-modal').classList.add('hidden');
+
   // buttons
   document.getElementById('btn-import').onclick = () => document.getElementById('file-input').click();
   document.getElementById('btn-export').onclick = exportCsv;
