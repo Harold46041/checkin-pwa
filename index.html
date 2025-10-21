@@ -1,85 +1,102 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Client Check-In</title>
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    /* Minimal styles for the new modal + layout */
-    .toolbar{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:12px 0}
-    .btn{padding:8px 12px;border:1px solid #2e2e2e;background:#1a1a1a;color:#fff;border-radius:10px;cursor:pointer}
-    .btn-primary{background:#2563eb;border-color:#1e40af}
-    .btn-success{background:#16a34a;border-color:#15803d}
-    .btn-ghost{background:transparent}
-    .search{flex:1;min-width:240px;padding:8px 10px;border-radius:10px;border:1px solid #2e2e2e;background:#111;color:#fff}
-    .list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
-    .row{display:flex;justify-content:space-between;align-items:center;border:1px solid #2e2e2e;border-radius:12px;padding:10px 12px;background:#0c0c0c}
-    .name{font-weight:600}
-    .sub{opacity:.8;font-size:.9em}
-    .badges{margin-left:8px;font-size:.75em;opacity:.7}
-    .actions{display:flex;gap:6px}
-    .hidden{display:none}
-    .modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.6);z-index:50}
-    .card{background:#111;border:1px solid #2e2e2e;border-radius:14px;padding:16px;min-width:320px;max-width:95vw}
-    .card h3{margin:0 0 8px}
-    .field{display:flex;flex-direction:column;margin:8px 0}
-    .field input{padding:8px;border-radius:8px;border:1px solid #2e2e2e;background:#0a0a0a;color:#fff}
-    .flex-end{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
-    .tag{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #2e2e2e;margin-left:8px}
-    /* Signature */
-    #sig-canvas{background:#fff;border-radius:8px;touch-action:none}
-  
-/* Force-hide any modal that has the 'hidden' class, even if other rules try to display it */
-.modal.hidden{display:none !important}
-
-  </style>
+  <meta charset="utf-8">
+  <title>Magnolia Wealth — Check-In</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2ea44f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+  <link rel="icon" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" sizes="512x512" href="icons/icon-512.png">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Client Check-In</h1>
-
-    <div class="toolbar">
-      <input id="file-input" type="file" accept=".csv" class="hidden" />
-      <button class="btn" id="btn-import">Import CSV</button>
-      <button class="btn" id="btn-export">Export CSV</button>
-      <button class="btn btn-primary" id="btn-add">+ Add Client</button>
-      <input id="search" class="search" placeholder="Search name, email, phone..." />
-      <span class="tag">Total: <span id="stats-total">0</span></span>
-      <span class="tag">Checked-in: <span id="stats-checked">0</span></span>
-      <span class="tag">Remaining: <span id="stats-remaining">0</span></span>
-    </div>
-
-    <div id="list" class="list"></div>
-  </div>
-
-  <!-- Add/Edit Client Modal -->
-  <div id="client-modal" class="modal hidden">
-    <div class="card">
-      <h3 id="client-modal-title">Edit Client</h3>
-      <div class="field"><label>Name</label><input id="client-name" type="text" /></div>
-      <div class="field"><label>Email</label><input id="client-email" type="email" /></div>
-      <div class="flex-end">
-        <button class="btn" id="client-cancel">Cancel</button>
-        <button class="btn btn-primary" id="client-save">Save</button>
+  <header class="app-header">
+    <div class="brand">
+      <div class="logo-fallback">MW</div>
+      <div class="titles">
+        <h1>Client Check-In</h1>
+        <p class="subtitle">Offline-first • iPad friendly</p>
       </div>
     </div>
-  </div>
+    <div class="stats">
+      <div class="stat"><span id="totalCount">0</span><label>Total</label></div>
+      <div class="stat"><span id="checkedCount">0</span><label>Checked-In</label></div>
+      <div class="stat"><span id="remainingCount">0</span><label>Remaining</label></div>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <div class="row">
+      <select id="eventSelect" class="event-select" aria-label="Event selector"></select>
+      <button id="newEventBtn" class="btn">+ New Event</button>
+      <input id="searchInput" class="search" type="search" placeholder="Search name, email, phone…" autocomplete="off" />
+      <button id="clearSearchBtn" class="btn ghost">Clear</button>
+    </div>
+    <div class="row">
+      <label class="file-btn">
+        <input id="importCsvInput" type="file" accept=".csv" hidden>
+        Import CSV
+      </label>
+      <button id="exportCsvBtn" class="btn">Export CSV</button>
+      <button id="exportZipBtn" class="btn">Export ZIP (CSV + PNGs)</button>
+      <button id="scanQrBtn" class="btn">Scan QR</button>
+      <button id="showNotCheckedBtn" class="btn ghost">Filter: Not Checked-In</button>
+    </div>
+  </section>
+
+  <main id="list" class="list"></main>
 
   <!-- Signature Modal -->
-  <div id="sig-modal" class="modal hidden">
-    <div class="card">
-      <h3>Sign</h3>
-      <canvas id="sig-canvas" width="480" height="180"></canvas>
-      <div class="flex-end">
-        <button class="btn" id="sig-clear">Clear</button>
-        <button class="btn btn-primary" id="sig-save">Save</button>
-      </div>
+  <dialog id="sigDialog">
+    <div class="sig-header">
+      <h3>Signature</h3>
+      <button id="sigClose" class="btn ghost">Close</button>
     </div>
-  </div>
+    <canvas id="sigCanvas" width="800" height="300"></canvas>
+    <div class="sig-actions">
+      <button id="sigClear" class="btn ghost">Clear</button>
+      <button id="sigSave" class="btn">Save Signature</button>
+    </div>
+  </dialog>
 
+  <!-- Edit Modal -->
+  <dialog id="editDialog">
+    <div class="sig-header">
+      <h3>Edit Guest</h3>
+      <button id="editClose" class="btn ghost">Close</button>
+    </div>
+    <div class="edit-form">
+      <label>Name <input id="editName" type="text" placeholder="Full name"></label>
+      <label>Email <input id="editEmail" type="email" placeholder="email@example.com"></label>
+      <label>Phone <input id="editPhone" type="tel" placeholder="555-555-5555"></label>
+    </div>
+    <div class="sig-actions">
+      <button id="editDelete" class="btn ghost">Delete</button>
+      <button id="editSave" class="btn">Save</button>
+    </div>
+  </dialog>
+
+  <!-- QR Modal -->
+  <dialog id="qrDialog">
+    <div class="qr-header">
+      <h3>Scan QR</h3>
+      <button id="qrClose" class="btn ghost">Close</button>
+    </div>
+    <video id="qrVideo" playsinline autoplay muted></video>
+    <div class="qr-status" id="qrStatus">Point camera at code…</div>
+  </dialog>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js').catch(console.error);
+      });
+    }
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
